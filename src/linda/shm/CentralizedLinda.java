@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import linda.Callback;
@@ -16,10 +14,10 @@ import linda.Tuple;
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
 
-	private static List<Tuple> shared = new CopyOnWriteArrayList<>();
+	private List<Tuple> shared = new ArrayList<>();
 
-	private ReentrantLock lock = new ReentrantLock();
-	
+	private Lock lock = new ReentrantLock();
+
 	/**
 	 * Used for testing
 	 */
@@ -27,8 +25,13 @@ public class CentralizedLinda implements Linda {
 	}
 
 	@Override
-	public void write(Tuple t) {
-		shared.add(t);
+	public  void write(Tuple t) {
+		lock.lock();
+		try {
+			this.shared.add(t);
+		} finally {
+		     lock.unlock();
+		}
 
 	}
 
@@ -36,22 +39,23 @@ public class CentralizedLinda implements Linda {
 	public Tuple take(Tuple template) {
 		boolean match = false;
 		Tuple toReturn = null;
-	
-		while(!match) {
-			for(Tuple tuple : shared) {
-				if(tuple.matches(template)) {
-					try {
-						lock.lock();
-						toReturn = tuple;
-						match = true;
-						shared.remove(toReturn);
-					} finally {
-						lock.unlock();
-					}
 
+		while(!match) {
+			lock.lock();
+			try {
+				for(Iterator<Tuple> it = shared.iterator(); it.hasNext(); ) {
+					Tuple tuple = it.next();
+					if(tuple.matches(template)) {
+						match = true;
+						toReturn = tuple;
+						it.remove();
+					}
 				}
+			} finally {
+				lock.unlock();
 			}
 		}
+		
 		return toReturn;
 	}
 
@@ -61,12 +65,18 @@ public class CentralizedLinda implements Linda {
 		Tuple toReturn = null;
 		
 		while(!match) {
-			for(Tuple tuple : shared) {
-				if(tuple.matches(template)) {
-					toReturn = tuple;
-					match = true;
-					break;
+			lock.lock();
+			try {
+				for(Iterator<Tuple> it = shared.iterator(); it.hasNext(); ) {
+					Tuple tuple = it.next();
+					if(tuple.matches(template)) {
+						match = true;
+						toReturn = tuple;
+						break;
+					}
 				}
+			} finally {
+				lock.unlock();
 			}
 		}
 		return toReturn;
@@ -104,7 +114,9 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void debug(String prefix) {
+		lock.lock();
 		System.out.println(prefix + " memory: " + shared.toString());
+		lock.unlock();
 	}
 
 	// TO BE COMPLETED
