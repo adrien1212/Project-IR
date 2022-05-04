@@ -22,6 +22,7 @@ public class CentralizedLinda implements Linda {
 	 * Used for testing
 	 */
 	public CentralizedLinda() {
+		
 	}
 
 	@Override
@@ -30,7 +31,7 @@ public class CentralizedLinda implements Linda {
 		try {
 			this.shared.add(t);
 		} finally {
-		     lock.unlock();
+			lock.unlock();
 		}
 
 	}
@@ -55,7 +56,7 @@ public class CentralizedLinda implements Linda {
 				lock.unlock();
 			}
 		}
-		
+
 		return toReturn;
 	}
 
@@ -63,7 +64,7 @@ public class CentralizedLinda implements Linda {
 	public Tuple read(Tuple template) {
 		boolean match = false;
 		Tuple toReturn = null;
-		
+
 		while(!match) {
 			lock.lock();
 			try {
@@ -84,8 +85,22 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Tuple tryTake(Tuple template) {
-		// TODO Auto-generated method stub
-		return null;
+		Tuple toReturn = null;
+
+		lock.lock();
+		try {
+			for(Iterator<Tuple> it = shared.iterator(); it.hasNext(); ) {
+				Tuple tuple = it.next();
+				if(tuple.matches(template)) {
+					toReturn = tuple;
+					it.remove();
+				}
+			}
+		} finally {
+			lock.unlock();
+		}
+
+		return toReturn;
 	}
 
 	@Override
