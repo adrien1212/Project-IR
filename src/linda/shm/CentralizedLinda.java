@@ -9,7 +9,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import linda.Callback;
 import linda.Linda;
+import linda.LindaEvent;
 import linda.Tuple;
+import linda.WaitingCallBack;
 
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
@@ -17,7 +19,9 @@ public class CentralizedLinda implements Linda {
 	private List<Tuple> shared = new ArrayList<>();
 
 	private Lock lock = new ReentrantLock();
-
+	
+	private List<LindaEvent> lindaEvents = new ArrayList<>();
+	
 	/**
 	 * Used for testing
 	 */
@@ -26,61 +30,59 @@ public class CentralizedLinda implements Linda {
 	}
 
 	@Override
-	public  void write(Tuple t) {
-		lock.lock();
-		try {
-			this.shared.add(t);
-		} finally {
-			lock.unlock();
+	public void write(Tuple t) {
+		boolean isLindaEventTake = false;
+		boolean match = false;
+		
+		List<LindaEvent> readMatches = new ArrayList<>();
+		
+		LindaEvent lindaEvent = null;
+		for(Iterator<LindaEvent> it = lindaEvents.iterator(); it.hasNext() && !match; ) {
+			lindaEvent = it.next();
+			if(t.matches(lindaEvent.getTemplate())) {
+				if(lindaEvent.getEventMode() == eventMode.TAKE) {
+					isLindaEventTake = true;
+					match = true;
+				} else if(lindaEvent.getEventMode() == eventMode.READ) {
+					readMatches.add(lindaEvent);
+				}
+			}
 		}
 
+		for(LindaEvent lindaEvent2 : readMatches) {
+			lindaEvent2.getCallback().call(t);
+		}
+		
+		if(match) {
+			lindaEvent.getCallback().call(t);
+		}
+
+		
+		if(!isLindaEventTake) {
+			shared.add(t);
+		}
 	}
 
 	@Override
 	public Tuple take(Tuple template) {
-		boolean match = false;
-		Tuple toReturn = null;
-
-		while(!match) {
-			lock.lock();
-			try {
-				for(Iterator<Tuple> it = shared.iterator(); it.hasNext(); ) {
-					Tuple tuple = it.next();
-					if(tuple.matches(template)) {
-						match = true;
-						toReturn = tuple;
-						it.remove();
-					}
-				}
-			} finally {
-				lock.unlock();
-			}
-		}
-
-		return toReturn;
+		WaitingCallBack waitingCallBack = new WaitingCallBack(template);
+		
+		eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, template, waitingCallBack);
+		
+		waitingCallBack.waitCallback();
+		
+		return waitingCallBack.getTuple();
 	}
 
 	@Override
 	public Tuple read(Tuple template) {
-		boolean match = false;
-		Tuple toReturn = null;
-
-		while(!match) {
-			lock.lock();
-			try {
-				for(Iterator<Tuple> it = shared.iterator(); it.hasNext(); ) {
-					Tuple tuple = it.next();
-					if(tuple.matches(template)) {
-						match = true;
-						toReturn = tuple;
-						break;
-					}
-				}
-			} finally {
-				lock.unlock();
-			}
-		}
-		return toReturn;
+		WaitingCallBack waitingCallBack = new WaitingCallBack(template);
+		
+		eventRegister(eventMode.READ, eventTiming.IMMEDIATE, template, waitingCallBack);
+		
+		waitingCallBack.waitCallback();
+		
+		return waitingCallBack.getTuple();
 	}
 
 	@Override
@@ -123,8 +125,33 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
-		// TODO Auto-generated method stub
-
+		lock.lock(); // permet d'avoir le bon nombre d'élément dans l'arrayList
+		
+		Tuple result = null;
+		
+		if(mode == eventMode.TAKE && timing == eventTiming.IMMEDIATE) {
+			/* Je regarde dans ma liste si j'ai un tuple qui correspond */
+			result = tryTake(template);
+			if(result != null) {
+				callback.call(result);
+			} else {
+				lindaEvents.add(new LindaEvent(mode, template, callback));
+			}
+		} else if(mode == eventMode.READ && timing == eventTiming.IMMEDIATE) {
+			result = tryRead(template);
+			if(result != null) {
+				callback.call(result);
+			} else {
+				LindaEvent event = new LindaEvent(mode, template, callback);
+				lindaEvents.add(event);
+			}
+		} else if((mode == eventMode.TAKE || mode == eventMode.READ) && timing == eventTiming.FUTURE) {
+			lindaEvents.add(new LindaEvent(mode, template, callback));
+		} else {
+			/* nothing */
+		}
+		
+		lock.unlock();
 	}
 
 	@Override
@@ -135,5 +162,6 @@ public class CentralizedLinda implements Linda {
 	}
 
 	// TO BE COMPLETED
+	
 
 }

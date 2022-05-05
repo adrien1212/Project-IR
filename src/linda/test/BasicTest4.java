@@ -64,7 +64,7 @@ public class BasicTest4 {
         new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -72,10 +72,10 @@ public class BasicTest4 {
                 System.out.println("\n");
                 
                 Tuple t4 = new Tuple(4, "foo");
-                System.out.println("(0) write: " + t4);
+                System.out.println("(4) write: " + t4);
                 linda.write(t4);
                                 
-                linda.debug("(0)");
+                linda.debug("(4)");
 
             }
         }.start();
