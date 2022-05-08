@@ -6,10 +6,7 @@ import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
 import linda.shm.CentralizedLinda;
 
-/**
- * Two READ eventRegister
- */
-public class BasicTestCallback2 {
+public class BasicTestCallback4 {
 
     private static Linda linda;
     private static Tuple cbmotif;
@@ -31,7 +28,6 @@ public class BasicTestCallback2 {
         // linda = new linda.server.LindaClient("//localhost:4000/MonServeur");
 
         cbmotif = new Tuple(Integer.class, String.class);
-        linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
         linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
 
         Tuple t1 = new Tuple(4, 5);

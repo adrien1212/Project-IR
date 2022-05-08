@@ -7,9 +7,12 @@ import linda.Linda.eventTiming;
 import linda.shm.CentralizedLinda;
 
 /**
- * Two READ eventRegister
+ * Two TAKE eventRegister
+ * First take the template
+ * Put a new same template
+ * Second take the template
  */
-public class BasicTestCallback2 {
+public class BasicTestCallback5 {
 
     private static Linda linda;
     private static Tuple cbmotif;
@@ -17,7 +20,6 @@ public class BasicTestCallback2 {
     private static class MyCallback implements Callback {
         public void call(Tuple t) {
             System.out.println("CB got "+t);
-            linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, this);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -31,9 +33,10 @@ public class BasicTestCallback2 {
         // linda = new linda.server.LindaClient("//localhost:4000/MonServeur");
 
         cbmotif = new Tuple(Integer.class, String.class);
-        linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
-        linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
+        linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
+        linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
 
+        
         Tuple t1 = new Tuple(4, 5);
         System.out.println("(2) write: " + t1);
         linda.write(t1);
@@ -48,6 +51,23 @@ public class BasicTestCallback2 {
         linda.write(t3);
 
         linda.debug("(2)");
+        
+        new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                Tuple t3 = new Tuple(4, "foo");
+                System.out.println("(0) write: " + t3);
+                linda.write(t3);
+                                
+                linda.debug("(0)");
+
+            }
+        }.start();
 
     }
 

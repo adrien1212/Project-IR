@@ -12,6 +12,9 @@ import linda.Linda;
 import linda.LindaEvent;
 import linda.Tuple;
 import linda.WaitingCallBack;
+import linda.eventHandler.LindaEventHandler;
+import linda.eventHandler.ReadLindaEventHandler;
+import linda.eventHandler.TakeLindaEventHandler;
 
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
@@ -19,8 +22,10 @@ public class CentralizedLinda implements Linda {
 	private List<Tuple> shared = new ArrayList<>();
 
 	private Lock lock = new ReentrantLock();
-	
-	private List<LindaEvent> lindaEvents = new ArrayList<>();
+		
+	private LindaEventHandler takeLindaEventHandler = new TakeLindaEventHandler();
+	private LindaEventHandler readLindaEventHandler = new ReadLindaEventHandler();
+
 	
 	/**
 	 * Used for testing
@@ -32,30 +37,9 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public void write(Tuple t) {
 		boolean isLindaEventTake = false;
-		boolean match = false;
-		
-		List<LindaEvent> readMatches = new ArrayList<>();
-		
-		LindaEvent lindaEvent = null;
-		for(Iterator<LindaEvent> it = lindaEvents.iterator(); it.hasNext() && !match; ) {
-			lindaEvent = it.next();
-			if(t.matches(lindaEvent.getTemplate())) {
-				if(lindaEvent.getEventMode() == eventMode.TAKE) {
-					isLindaEventTake = true;
-					match = true;
-				} else if(lindaEvent.getEventMode() == eventMode.READ) {
-					readMatches.add(lindaEvent);
-				}
-			}
-		}
 
-		for(LindaEvent lindaEvent2 : readMatches) {
-			lindaEvent2.getCallback().call(t);
-		}
-		
-		if(match) {
-			lindaEvent.getCallback().call(t);
-		}
+		isLindaEventTake = takeLindaEventHandler.performMatching(t);
+		readLindaEventHandler.performMatching(t);
 
 		
 		if(!isLindaEventTake) {
@@ -135,7 +119,7 @@ public class CentralizedLinda implements Linda {
 			if(result != null) {
 				callback.call(result);
 			} else {
-				lindaEvents.add(new LindaEvent(mode, template, callback));
+				takeLindaEventHandler.add(new LindaEvent(mode, template, callback));
 			}
 		} else if(mode == eventMode.READ && timing == eventTiming.IMMEDIATE) {
 			result = tryRead(template);
@@ -143,10 +127,14 @@ public class CentralizedLinda implements Linda {
 				callback.call(result);
 			} else {
 				LindaEvent event = new LindaEvent(mode, template, callback);
-				lindaEvents.add(event);
+				readLindaEventHandler.add(event);
 			}
-		} else if((mode == eventMode.TAKE || mode == eventMode.READ) && timing == eventTiming.FUTURE) {
-			lindaEvents.add(new LindaEvent(mode, template, callback));
+		} else if(timing == eventTiming.FUTURE) {
+			if(mode == eventMode.TAKE) {
+				takeLindaEventHandler.add(new LindaEvent(mode, template, callback));
+			} else {
+				readLindaEventHandler.add(new LindaEvent(mode, template, callback));
+			}
 		} else {
 			/* nothing */
 		}
