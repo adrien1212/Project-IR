@@ -1,6 +1,7 @@
 package linda.eventHandler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,6 +41,20 @@ public class ReadLindaEventHandler implements LindaEventHandler {
 		}
 		
 		return match;
+	}
+
+	@Override
+	public Collection<LindaEvent> getAllMatch(Tuple tuple) {
+		Collection<LindaEvent> toReturn = new ArrayList<>();
+		
+		for(Iterator<LindaEvent> it = readLindaEvent.iterator(); it.hasNext(); ) {
+			LindaEvent lindaEvent = it.next();
+			if(tuple.matches(lindaEvent.getTemplate())) {
+				toReturn.add(lindaEvent);
+			}
+		}
+		
+		return toReturn;
 	}
 
 }

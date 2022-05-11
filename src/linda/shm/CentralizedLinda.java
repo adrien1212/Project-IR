@@ -6,6 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import linda.Callback;
 import linda.Linda;
@@ -91,20 +94,38 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Tuple tryRead(Tuple template) {
-		// TODO Auto-generated method stub
-		return null;
+		Tuple toReturn = null;
+
+		lock.lock();
+		try {
+			for(Iterator<Tuple> it = shared.iterator(); it.hasNext(); ) {
+				Tuple tuple = it.next();
+				if(tuple.matches(template)) {
+					toReturn = tuple;
+				}
+			}
+		} finally {
+			lock.unlock();
+		}
+
+		return toReturn;
 	}
 
 	@Override
 	public Collection<Tuple> takeAll(Tuple template) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Tuple> removed = 
+				shared.stream()
+			    .filter(tuple -> tuple.matches(template))
+			    .collect(Collectors.toList());
+
+		shared.removeAll(removed);
+		
+		return removed;
 	}
 
 	@Override
 	public Collection<Tuple> readAll(Tuple template) {
-		// TODO Auto-generated method stub
-		return null;
+		return shared.stream().filter(tuple -> tuple.matches(template)).collect(Collectors.toList());
 	}
 
 	@Override
