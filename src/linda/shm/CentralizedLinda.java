@@ -1,18 +1,23 @@
 package linda.shm;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import linda.Callback;
 import linda.Linda;
 import linda.LindaEvent;
+import linda.Saveable;
 import linda.Tuple;
 import linda.WaitingCallBack;
 import linda.eventHandler.LindaEventHandler;
@@ -20,8 +25,10 @@ import linda.eventHandler.ReadLindaEventHandler;
 import linda.eventHandler.TakeLindaEventHandler;
 
 /** Shared memory implementation of Linda. */
-public class CentralizedLinda implements Linda {
+public class CentralizedLinda implements Linda, Saveable {
 
+	public static final String SAVE_FILENAME = "save.backup";
+	
 	private List<Tuple> shared = new ArrayList<>();
 
 	private Lock lock = new ReentrantLock();
@@ -44,9 +51,9 @@ public class CentralizedLinda implements Linda {
 		isLindaEventTake = takeLindaEventHandler.performMatching(t);
 		readLindaEventHandler.performMatching(t);
 
-		
 		if(!isLindaEventTake) {
 			shared.add(t);
+			saveToFile(SAVE_FILENAME);
 		}
 	}
 
@@ -58,6 +65,8 @@ public class CentralizedLinda implements Linda {
 		
 		waitingCallBack.waitCallback();
 		
+		saveToFile(SAVE_FILENAME);
+
 		return waitingCallBack.getTuple();
 	}
 
@@ -89,6 +98,8 @@ public class CentralizedLinda implements Linda {
 			lock.unlock();
 		}
 
+		saveToFile(SAVE_FILENAME);
+
 		return toReturn;
 	}
 
@@ -119,7 +130,8 @@ public class CentralizedLinda implements Linda {
 			    .collect(Collectors.toList());
 
 		shared.removeAll(removed);
-		
+		saveToFile(SAVE_FILENAME);
+
 		return removed;
 	}
 
@@ -170,7 +182,38 @@ public class CentralizedLinda implements Linda {
 		lock.unlock();
 	}
 
-	// TO BE COMPLETED
+	@Override
+	public void saveToFile(String fileName) {
+		FileOutputStream fout = null;
+		ObjectOutputStream oos;
+		try {
+			fout = new FileOutputStream(fileName);
+			oos = new ObjectOutputStream(fout);
+			oos.writeObject(shared);
+			oos.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
+	@Override
+	public void loadFromFile(String fileName) {		
+		ObjectInputStream ois = null;
+		try {
+		    FileInputStream fin = new FileInputStream(fileName);
+		    ois = new ObjectInputStream(fin);
+		    List<Tuple> readCase = (List<Tuple>) ois.readObject();
+		    shared.addAll(readCase);
+	    	ois.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

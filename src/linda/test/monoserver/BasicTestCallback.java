@@ -1,16 +1,12 @@
 
-package linda.test;
+package linda.test.monoserver;
 
 import linda.*;
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
 import linda.shm.CentralizedLinda;
 
-/**
- * Two TAKE eventRegister
- * Only one perform
- */
-public class BasicTestCallback3 {
+public class BasicTestCallback {
 
     private static Linda linda;
     private static Tuple cbmotif;
@@ -18,7 +14,7 @@ public class BasicTestCallback3 {
     private static class MyCallback implements Callback {
         public void call(Tuple t) {
             System.out.println("CB got "+t);
-            linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, this);
+            linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, this);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -28,14 +24,12 @@ public class BasicTestCallback3 {
     }
 
     public static void main(String[] a) {
-        linda = new CentralizedLinda();
-        // linda = new linda.server.LindaClient("//localhost:4000/MonServeur");
+        //linda = new CentralizedLinda();
+        linda = new linda.server.LindaClient("localhost:4000/MonServeur");
 
         cbmotif = new Tuple(Integer.class, String.class);
         linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
-        //linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
 
-        
         Tuple t1 = new Tuple(4, 5);
         System.out.println("(2) write: " + t1);
         linda.write(t1);

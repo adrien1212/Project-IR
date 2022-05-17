@@ -1,11 +1,14 @@
 package linda;
 
+import java.io.Serializable;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class WaitingCallBack implements Callback {
+public class WaitingCallBack implements Callback, Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private Semaphore lock = new Semaphore(0);
 	private Tuple template;
 	private Tuple tuple;
