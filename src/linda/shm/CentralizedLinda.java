@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -25,7 +26,9 @@ import linda.eventHandler.ReadLindaEventHandler;
 import linda.eventHandler.TakeLindaEventHandler;
 
 /** Shared memory implementation of Linda. */
-public class CentralizedLinda implements Linda, Saveable {
+public class CentralizedLinda implements Linda, Saveable, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	public static final String SAVE_FILENAME = "save.backup";
 	
@@ -184,18 +187,18 @@ public class CentralizedLinda implements Linda, Saveable {
 
 	@Override
 	public void saveToFile(String fileName) {
-		FileOutputStream fout = null;
-		ObjectOutputStream oos;
-		try {
-			fout = new FileOutputStream(fileName);
-			oos = new ObjectOutputStream(fout);
-			oos.writeObject(shared);
-			oos.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		FileOutputStream fout = null;
+//		ObjectOutputStream oos;
+//		try {
+//			fout = new FileOutputStream(fileName);
+//			oos = new ObjectOutputStream(fout);
+//			oos.writeObject(shared);
+//			oos.close();
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 	@Override

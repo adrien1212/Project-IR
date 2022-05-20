@@ -1,7 +1,11 @@
 package linda;
 
+import java.io.Serializable;
 
-public class LindaEvent {
+public class LindaEvent implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	
 	private Linda.eventMode eventMode;
 	private Tuple template;
 	private Callback callback;

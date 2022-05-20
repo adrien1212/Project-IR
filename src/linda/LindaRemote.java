@@ -63,4 +63,7 @@ public interface LindaRemote extends Remote {
     /** To debug, prints any information it wants (e.g. the tuples in tuplespace or the registered callbacks), prefixed by <code>prefix</code. */
     public void debug(String prefix) throws RemoteException;
 
+    void update(Linda linda) throws RemoteException;
+    
+    void subscribe(LindaRemote lindaRemote) throws RemoteException;
 }

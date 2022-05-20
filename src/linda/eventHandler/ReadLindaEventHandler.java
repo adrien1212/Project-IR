@@ -1,5 +1,6 @@
 package linda.eventHandler;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -9,8 +10,10 @@ import linda.LindaEvent;
 import linda.Tuple;
 import linda.Linda.eventMode;
 
-public class ReadLindaEventHandler implements LindaEventHandler {
+public class ReadLindaEventHandler implements LindaEventHandler, Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private List<LindaEvent> readLindaEvent = new ArrayList<>();
 	
 	@Override
