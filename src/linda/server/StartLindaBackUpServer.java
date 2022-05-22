@@ -51,8 +51,12 @@ public class StartLindaBackUpServer {
 			e.printStackTrace();
 		}
 
-		if(socket.getInputStream().read() != -1) {
-			throw new Exception("something weird happened");
+		try {
+			if(socket.getInputStream().read() != -1) {
+				throw new Exception("something wrong");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
         
         System.err.println("Primary server is down");

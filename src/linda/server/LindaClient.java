@@ -1,5 +1,6 @@
 package linda.server;
 
+import java.net.ConnectException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.Collection;
@@ -19,12 +20,15 @@ public class LindaClient implements Linda {
 	
 	private LindaRemote lindaRemote;
 	
+	private String serverURI;
+	
     /** Initializes the Linda implementation.
      *  @param serverURI the URI of the server, e.g. "rmi://localhost:4000/LindaServer" or "//localhost:4000/LindaServer".
      */
     public LindaClient(String serverURI) {
     	try {
     		lindaRemote = (LindaRemote) Naming.lookup("rmi://" + serverURI);
+    		this.serverURI = serverURI;
     		System.err.println("Client connected");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
@@ -37,7 +41,7 @@ public class LindaClient implements Linda {
 		try {
 			lindaRemote.write(t);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 	}
@@ -48,7 +52,7 @@ public class LindaClient implements Linda {
 		try {
 			toReturn = lindaRemote.take(template);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 		return toReturn;
@@ -60,7 +64,7 @@ public class LindaClient implements Linda {
 		try {
 			toReturn = lindaRemote.read(template);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 		return toReturn;
@@ -72,9 +76,9 @@ public class LindaClient implements Linda {
 		try {
 			toReturn = lindaRemote.tryTake(template);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
-		}
+		} 
 		return toReturn;
 	}
 
@@ -84,7 +88,7 @@ public class LindaClient implements Linda {
 		try {
 			toReturn = lindaRemote.tryRead(template);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 		return toReturn;
@@ -96,7 +100,7 @@ public class LindaClient implements Linda {
 		try {
 			toReturn = lindaRemote.takeAll(template);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 		return toReturn;
@@ -108,7 +112,7 @@ public class LindaClient implements Linda {
 		try {
 			toReturn = lindaRemote.readAll(template);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 		return toReturn;
@@ -120,7 +124,7 @@ public class LindaClient implements Linda {
 			RemoteCallback remoteCallback = new RemoteCallbackImpl(callback);
 			lindaRemote.eventRegister(mode, timing, template, remoteCallback);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 	}
@@ -130,11 +134,18 @@ public class LindaClient implements Linda {
 		try {
 			lindaRemote.debug(prefix);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			reconnectionServer();
 			e.printStackTrace();
 		}
 	}
     
-    // TO BE COMPLETED
+    private void reconnectionServer() {
+    	try {
+    		lindaRemote = (LindaRemote) Naming.lookup("rmi://" + serverURI);
+    	} catch (Exception e) {
+    		System.err.println("Client exception: " + e.toString());
+            e.printStackTrace();
+		}
+    }
 
 }
