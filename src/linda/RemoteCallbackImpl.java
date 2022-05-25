@@ -16,10 +16,6 @@ public class RemoteCallbackImpl extends UnicastRemoteObject implements RemoteCal
 	public RemoteCallbackImpl(Callback callback) throws RemoteException {
 		this.callback = callback;
 	}
-	
-	public Callback getCallback() throws RemoteException {
-		return callback;
-	}
 
 	@Override
 	public void call(Tuple t) throws RemoteException {

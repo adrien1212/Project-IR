@@ -1,12 +1,11 @@
 package linda.server;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Flow.Subscriber;
 
 import linda.Callback;
 import linda.Linda;
@@ -18,7 +17,7 @@ import linda.Saveable;
 import linda.Tuple;
 import linda.shm.CentralizedLinda;
 
-public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote, Saveable {
+public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote, Saveable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -38,8 +37,9 @@ public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote,
 
 	@Override
 	public Tuple take(Tuple template) throws RemoteException {
+		Tuple t = linda.take(template);
 		notifySubscriber();
-		return linda.take(template);
+		return t;
 	}
 
 	@Override
@@ -50,8 +50,9 @@ public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote,
 
 	@Override
 	public Tuple tryTake(Tuple template) throws RemoteException {
+		Tuple t = linda.tryTake(template);
 		notifySubscriber();
-		return linda.tryTake(template);
+		return t;
 	}
 
 	@Override
@@ -62,8 +63,9 @@ public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote,
 
 	@Override
 	public Collection<Tuple> takeAll(Tuple template) throws RemoteException {
+		Collection<Tuple> ts = linda.takeAll(template);
 		notifySubscriber();
-		return linda.takeAll(template);
+		return ts;
 	}
 
 	@Override
@@ -79,7 +81,6 @@ public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote,
             try {
 				callback.call(t);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         };
@@ -93,20 +94,22 @@ public class LindaRemoteImpl extends UnicastRemoteObject implements LindaRemote,
 	}
 
 	public void update(Linda linda) {
-		System.out.println("update " + linda);
-		this.linda = linda;
+		CentralizedLinda cl = (CentralizedLinda) linda;
+		this.linda = cl;
 	}
 	
 	public void notifySubscriber() throws RemoteException {
 		for (LindaRemote lindaRemote : subscribers) {
-			System.out.println("notify");
-			lindaRemote.update(linda);
+			/*
+			 * Notifier tous les abonnés de this qu'ils doivent
+			 * mettre à jour leur linda (CentralizedLinda en soit)
+			 */
+			lindaRemote.update((CentralizedLinda) linda);
 		}
 	}
 	
 	public void subscribe(LindaRemote lindaRemote)  throws RemoteException {
 		subscribers.add(lindaRemote);
-		System.out.println("subscribe");
 	}
 
 	@Override

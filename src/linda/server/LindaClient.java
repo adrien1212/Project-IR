@@ -141,7 +141,9 @@ public class LindaClient implements Linda {
     
     private void reconnectionServer() {
     	try {
-    		lindaRemote = (LindaRemote) Naming.lookup("rmi://" + serverURI);
+    		System.out.println("reconnection");
+    		Thread.sleep(1000);
+    		this.lindaRemote = (LindaRemote) Naming.lookup("rmi://" + this.serverURI);
     	} catch (Exception e) {
     		System.err.println("Client exception: " + e.toString());
             e.printStackTrace();

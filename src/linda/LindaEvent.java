@@ -2,6 +2,10 @@ package linda;
 
 import java.io.Serializable;
 
+/**
+ * Gestion des evènements
+ * @author acaubel
+ */
 public class LindaEvent implements Serializable {
 
 	private static final long serialVersionUID = 1L;

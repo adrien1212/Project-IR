@@ -20,7 +20,7 @@ public class StartLindaServer {
 				
 		while(true) {
 			Socket soc = server.accept();
-			System.out.println("acception socket : " + soc);
+			System.err.println("Socket accepted : " + soc);
 		}
     }
 	
@@ -30,7 +30,7 @@ public class StartLindaServer {
         try {
             dns = LocateRegistry.createRegistry(PORT);
         } catch (java.rmi.server.ExportException e) {
-            System.out.println("A registry is already running, proceeding...");
+            System.err.println("A registry is already running, proceeding...");
         }
 
         LindaRemote lr = new LindaRemoteImpl(new CentralizedLinda());

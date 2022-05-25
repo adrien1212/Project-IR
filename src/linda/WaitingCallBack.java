@@ -5,6 +5,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Callback d'attente pour les méthodes bloquantes 
+ * @author acaubel
+ */
 public class WaitingCallBack implements Callback, Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -27,7 +31,6 @@ public class WaitingCallBack implements Callback, Serializable {
 		try {
 			lock.acquire();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

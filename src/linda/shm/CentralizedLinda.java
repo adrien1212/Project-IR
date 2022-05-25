@@ -211,7 +211,7 @@ public class CentralizedLinda implements Linda, Saveable, Serializable {
 		    shared.addAll(readCase);
 	    	ois.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			System.out.println("No save found, starting a blank server.");
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
